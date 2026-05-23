@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZenitApp - Panel de Control Profesional</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <div id="vista-login" class="contenedor-login">
+        <div class="tarjeta-login">
+            <h1 class="marca-titulo">ZENIT</h1>
+            <h3 class="marca-subtitulo">Control Inteligente</h3>
+            
+            <div class="bloque-formulario" style="margin-top: 40px; width: 100%;">
+                <h2 id="auth-titulo">Iniciar Sesión</h2>
+                
+                <input type="text" id="login-usuario" placeholder="Nombre de usuario" style="display: none;">
+                <input type="email" id="login-correo" placeholder="Correo electrónico">
+                <input type="password" id="login-clave" placeholder="Contraseña">
+                
+                <button id="btn-entrar">Entrar a la Plataforma</button>
+                
+                <p class="texto-conmutador">
+                    <span id="txt-pregunta">¿No tienes cuenta?</span> 
+                    <a href="#" id="enlace-auth" onclick="alternarFormularioAuth(event)">Regístrate</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div id="vista-panel" class="app-web-layout" style="display: none;">
+        
+        <nav class="barra-navegacion-global">
+            <div class="marca-corporativa">
+                <img src="logo.png" alt="Zenit Logo" class="logo-nav-img">
+                <span class="logo-texto">ZENIT Web</span>
+            </div>
+            <div class="menu-enlaces-global">
+                <a href="#" class="enlace-nav-web activo" onclick="cambiarPestana('sec-movimientos')">Movimientos</a>
+                <a href="#" class="enlace-nav-web" onclick="cambiarPestana('sec-metas')">Metas de Ahorro</a>
+                <a href="#" class="enlace-nav-web" onclick="cambiarPestana('sec-presupuestos')">Presupuestos</a>
+                <a href="#" class="enlace-nav-web" onclick="cambiarPestana('sec-analisis')">Análisis Premium</a>
+            </div>
+            <button id="btn-cerrar" class="btn-salir-web">Cerrar Sesión</button>
+        </nav>
+
+        <nav class="subbar-acciones-sistema">
+            <span class="titulo-operaciones">Operaciones rápidas:</span>
+            <div class="grupo-botones-acciones">
+                <button class="btn-accion gasto" onclick="abrirModal('Gasto')">Añadir Gasto</button>
+                <button class="btn-accion ingreso" onclick="abrirModal('Ingreso')">Añadir Ingreso</button>
+                <button class="btn-accion meta" onclick="abrirModal('Meta')">Crear Meta</button>
+                <button class="btn-accion presupuesto" onclick="abrirModal('Presupuesto')">Fijar Presupuesto</button>
+            </div>
+        </nav>
+
+        <div class="seccion-metricas-consolidadas">
+            <div class="tarjeta-metrica balance">
+                <h3>Tu Balance Total Libre</h3>
+                <h2 id="saldo-total">0.00€</h2>
+                <div class="salud-financiera-badge saludable" style="margin-top: 12px;">
+                    <span class="punto-dot">●</span> Salud Financiera: Estable
+                </div>
+            </div>
+            <div class="tarjeta-metrica ingresos">
+                <h3>Total Ingresos del Mes</h3>
+                <h2 id="ingresos-totales-web">0.00€</h2>
+                <div class="indicador-subtexto">Sincronizado con AWS</div>
+            </div>
+            <div class="tarjeta-metrica gastos">
+                <h3>Total Gastos del Mes</h3>
+                <h2 id="gastos-totales-web">0.00€</h2>
+                <div class="indicador-subtexto">Límites activos RDS</div>
+            </div>
+        </div>
+
+        <main class="zona-contenido-principal">
+            
+            <section id="sec-movimientos" class="pestana-contenido">
+                <div class="cabecera-seccion-tabla">
+                    <h2>Historial de Transacciones</h2>
+                    <span class="contador-registros">Filtro: Todo el histórico</span>
+                </div>
+                <div id="lista-movimientos" class="tabla-web-contenedor"></div>
+            </section>
+
+            <section id="sec-metas" class="pestana-contenido" style="display: none;">
+                <h2>Mis Metas de Ahorro Activas</h2>
+                <div id="lista-metas" class="grilla-web-tarjetas"></div>
+            </section>
+
+            <section id="sec-presupuestos" class="pestana-contenido" style="display: none;">
+                <h2>Límites de Presupuestos por Categoría</h2>
+                <div id="lista-presupuestos" class="grilla-web-tarjetas"></div>
+            </section>
+
+            <section id="sec-analisis" class="pestana-contenido" style="display: none;">
+                <h2>Análisis de Salud Financiera Extendida</h2>
+                <div class="panel-analisis-doble">
+                    <div class="tarjeta-grafico">
+                        <canvas id="graficoGastosWeb"></canvas>
+                    </div>
+                    <div class="tarjeta-reporte">
+                        <div class="badge-ia">ZenitAI Smart Engine</div>
+                        <h3>Recomendación Automatizada</h3>
+                        <p id="ia-consejo">Analizando histórico de AWS...</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="modal-formulario" class="modal-sombra" style="display: none;">
+        <div class="modal-contenido">
+            <h2 id="modal-titulo">Añadir Registro</h2>
+            <div id="modal-campos"></div>
+            <div class="modal-botones">
+                <button class="btn-cancelar" onclick="cerrarModal()">Cancelar</button>
+                <button class="btn-guardar" id="btn-modal-guardar">Guardar en AWS</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/movimientos.js"></script>
+    <script src="js/metas.js"></script>
+    <script src="js/presupuestos.js"></script>
+    <script src="js/analisis.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
