@@ -1,199 +1,219 @@
-const URL_BASE = "http://56.228.34.149:8080";
-// Escuchar el botón de Login
-document.getElementById("btn-entrar").addEventListener("click", async () => {
-    const correo = document.getElementById("login-correo").value;
-    const clave = document.getElementById("login-clave").value;
+// ==========================================================================
+// APP.JS - ENRUTADOR MAESTRO Y AUTENTICACIÓN REAL EN AWS KTOR
+// ==========================================================================
+
+let seccionPrincipalActual = "inicio";
+let subPestanaActual = "gastos";
+let modoCrudActivo = "lectura"; // lectura | modificar | eliminar
+
+// 💡 URL BASE DE TU SERVIDOR EN LA NUBE (Ajusta la IP o dominio de tu instancia EC2)
+const API_URL_BASE = "http://56.228.34.149:8080"; 
+
+async function simularLogin(event) {
+    // 💡 SOLUCIÓN: Evitamos que la página web se recargue y borre los estados de Compose/JS
+    if (event) event.preventDefault();
+
+    const correo = document.getElementById("login-correo").value.trim();
+    const clave = document.getElementById("login-clave").value.trim();
+    const usuarioInput = document.getElementById("login-usuario");
+    
+    if (usuarioInput.style.display === "block") {
+        const nombreUser = usuarioInput.value.trim();
+        if (!nombreUser || !correo || !clave) {
+            alert("Por favor, rellena todos los campos para crear tu cuenta.");
+            return;
+        }
+
+        try {
+            const respuesta = await fetch(`${API_URL_BASE}/auth/register`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username: nombreUser, email: correo, password: clave })
+            });
+
+            if (respuesta.ok) {
+                alert("¡Cuenta registrada con éxito en AWS Estocolmo! Ya puedes iniciar sesión.");
+                alternarFormularioAuth(new Event('click'));
+            } else {
+                alert("Error en el registro: El usuario o el email ya están en uso.");
+            }
+        } catch (error) {
+            console.error("Fallo de red en registro:", error);
+            alert("Error de conexión con el servidor de AWS.");
+        }
+        return;
+    }
+
+    if (!correo || !clave) {
+        alert("Por favor, introduce tu correo electrónico y tu contraseña.");
+        return;
+    }
 
     try {
-        const respuesta = await fetch(`${URL_BASE}/auth/login`, {
+        const respuesta = await fetch(`${API_URL_BASE}/auth/login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email: correo, password: clave })
         });
 
         if (respuesta.ok) {
-            const datos = await respuesta.json();
+            const datosUsuario = await respuesta.json();
+
+            localStorage.setItem("token_jwt", datosUsuario.token);
+            localStorage.setItem("user_name", datosUsuario.username);
+            localStorage.setItem("user_email", datosUsuario.email);
+
+            document.getElementById("perfil-nombre").innerText = datosUsuario.username;
+            document.getElementById("perfil-correo").innerText = datosUsuario.email;
+            document.getElementById("header-nombre-avatar").innerText = datosUsuario.username.charAt(0).toUpperCase();
             
-            // Guardamos el token de AWS de forma persistente en el navegador
-            localStorage.setItem("auth_token", datos.token);
-            
-            // Cambiamos de pantalla de forma manual en el DOM
-            mostrarPanelPrincipal();
+            document.getElementById("vista-login").style.display = "none";
+            document.getElementById("vista-panel").style.display = "flex";
+            irAInicio();
+
         } else {
-            alert("Credenciales incorrectas");
+            alert("Credenciales incorrectas. El correo electrónico o la contraseña no coinciden en nuestro sistema.");
         }
     } catch (error) {
-        console.error("Error de conexión con AWS:", error);
-    }
-});
-// Variable de control de estado interno
-let esModoRegistro = false;
-
-// Función para cambiar de formulario en la misma tarjeta
-function alternarFormularioAuth(event) {
-    event.preventDefault();
-    esModoRegistro = !esModoRegistro;
-    
-    const titulo = document.getElementById("auth-titulo");
-    const campoUsuario = document.getElementById("login-usuario");
-    const boton = document.getElementById("btn-entrar");
-    const pregunta = document.getElementById("txt-pregunta");
-    const enlace = document.getElementById("enlace-auth");
-    
-    if (esModoRegistro) {
-        titulo.innerText = "Crear Cuenta";
-        campoUsuario.style.display = "block";
-        boton.innerText = "Registrarse en Zenit";
-        pregunta.innerText = "¿Ya tienes cuenta?";
-        enlace.innerText = "Inicia sesión";
-    } else {
-        titulo.innerText = "Iniciar Sesión";
-        campoUsuario.style.display = "none";
-        boton.innerText = "Entrar a la Plataforma";
-        pregunta.innerText = "¿No tienes cuenta?";
-        enlace.innerText = "Regístrate";
+        console.error("Fallo de red en login:", error);
+        alert("Error de conexión con el servidor de AWS. Asegúrate de tener Ktor arrancado.");
     }
 }
 
-// Modificación del Listener del Botón para que sea inteligente
-document.getElementById("btn-entrar").addEventListener("click", async () => {
-    const correo = document.getElementById("login-correo").value;
-    const clave = document.getElementById("login-clave").value;
+function cerrarSesion() {
+    // Purgamos las credenciales locales de seguridad
+    localStorage.clear();
     
-    if (esModoRegistro) {
-        // --- FLUJO DE REGISTRO EN AWS ---
-        const username = document.getElementById("login-usuario").value;
-        if (!username || !correo || !clave) return alert("Rellena todos los campos");
-        
-        try {
-            const respuesta = await fetch(`${URL_BASE}/auth/register`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ username: username, email: correo, password: clave })
-            });
-            
-            if (respuesta.ok) {
-                alert("¡Usuario creado con éxito! Ya puedes iniciar sesión.");
-                document.getElementById("enlace-auth").click(); // Forzamos la vuelta al login limpio
-            } else {
-                alert("Error al registrar el usuario");
-            }
-        } catch (e) { console.error(e); }
-        
-    } else {
-        // --- FLUJO DE LOGIN TRADICIONAL ---
-        if (!correo || !clave) return alert("Introduce tus credenciales");
-        try {
-            const respuesta = await fetch(`${URL_BASE}/auth/login`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email: correo, password: clave })
-            });
+    document.getElementById("login-correo").value = "";
+    document.getElementById("login-clave").value = "";
+    document.getElementById("login-usuario").value = "";
+    
+    document.getElementById("vista-panel").style.display = "none";
+    document.getElementById("vista-login").style.display = "flex";
+}
 
-            if (respuesta.ok) {
-                const datos = await respuesta.json();
-                localStorage.setItem("auth_token", datos.token);
-                mostrarPanelPrincipal();
-            } else {
-                alert("Credenciales incorrectas");
-            }
-        } catch (error) { console.error(error); }
-    }
-});
-// 💡 SOLUCIÓN: Forzamos la descarga de todo el ecosistema de AWS nada más iniciar sesión
-function mostrarPanelPrincipal() {
-    document.getElementById("vista-login").style.display = "none";
-    document.getElementById("vista-panel").style.display = "block";
-    
-    // Al igual que haces en el LaunchedEffect de Android, disparamos las 3 consultas en paralelo:
-    obtenerMovimientosWeb();   // Descarga e inyecta las transacciones
-    obtenerMetasWeb();         // Descarga e inyecta las metas de ahorro
-    if (typeof obtenerPresupuestosWeb === "function") {
-        obtenerPresupuestosWeb();  // Descarga los límites de categorías que creamos hoy
-    }
-}
-function mostrarNotificacionZenit(mensaje, tipo = "exito") {
-    const toast = document.createElement("div");
-    toast.className = `toast-zenit ${tipo}`;
-    toast.innerText = mensaje;
-    
-    document.body.appendChild(toast);
-    
-    // Animación de entrada y salida manual
-    setTimeout(() => toast.classList.add("mostrar"), 100);
-    setTimeout(() => {
-        toast.classList.remove("mostrar");
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
-}
-// Dentro de tu js/movimientos.js o js/app.js (donde proceses los totales)
-function actualizarCuadroTotalesWeb(movimientos) {
-    const totalIngresos = movimientos.filter(m => m.tipo === "INGRESO").reduce((s, m) => s + m.monto, 0);
-    const totalGastos = movimientos.filter(m => m.tipo === "GASTO").reduce((s, m) => s + m.monto, 0);
-    const balanceLibre = totalIngresos - totalGastos;
-
-    // Pintamos los datos de la RDS en las tres columnas horizontales
-    document.getElementById("saldo-total").innerText = `${balanceLibre.toFixed(2)}€`;
-    document.getElementById("ingresos-totales-web").innerText = `${totalIngresos.toFixed(2)}€`;
-    document.getElementById("gastos-totales-web").innerText = `${totalGastos.toFixed(2)}€`;
-}
+// ... A partir de aquí tu alternarFormularioAuth(e) continúa igual hacia abajo ...
 // ==========================================================================
-// 4. ACCIÓN DE BORRAR (Para que funcione el botón de la papelera)
+// CONTROL CONMUTADOR AUTH - VERSIÓN COMPACTA
 // ==========================================================================
-
-
-// Función para alternar entre pantallas en el index sin recargar
-function cambiarPestana(idSeccionObjetivo) {
-    const secciones = document.querySelectorAll('.pestana-contenido');
-    secciones.forEach(sec => sec.style.display = 'none');
-
-    const enlaces = document.querySelectorAll('.enlace-nav');
-    enlaces.forEach(enlace => enlace.classList.remove('activo'));
-
-    document.getElementById(idSeccionObjetivo).style.display = 'block';
-
-    const enlaceActivo = Array.from(document.querySelectorAll('.enlace-nav'))
-        .find(e => e.getAttribute('onclick').includes(idSeccionObjetivo));
-    if (enlaceActivo) enlaceActivo.classList.add('activo');
+function alternarFormularioAuth(e) {
+    if (e && e.preventDefault) e.preventDefault();
     
-    // 💡 SOLUCIÓN: Disparadores automáticos para nutrir las tablas web
-    if (idSeccionObjetivo === 'sec-movimientos') {
-        obtenerMovimientosWeb();
-    } else if (idSeccionObjetivo === 'sec-metas') {
-        obtenerMetasWeb(); // Llama a tu función fetch de metas
-    } else if (idSeccionObjetivo === 'sec-presupuestos') {
-        // Aquí llamarías a obtenerPresupuestosWeb() cuando lo programes
-    } else if (idSeccionObjetivo === 'sec-analisis') {
-        renderizerGraficoWeb();
+    const mainTitle = document.getElementById("auth-main-title");
+    const inputUser = document.getElementById("login-usuario");
+    const btnEntrar = document.getElementById("btn-entrar");
+    const txtPregunta = document.getElementById("txt-pregunta");
+    const enlaceAuth = document.getElementById("enlace-auth");
+    const contenedorForm = document.querySelector(".form-container");
+
+    if (inputUser.style.display === "none") {
+        mainTitle.innerText = "Sign Up";
+        inputUser.style.display = "block";
+        btnEntrar.innerText = "Register Now";
+        txtPregunta.innerText = "¿Ya tienes cuenta?";
+        enlaceAuth.innerText = "Log in";
+        if(contenedorForm) contenedorForm.style.minHeight = "440px";
+    } else {
+        mainTitle.innerText = "Welcome back";
+        inputUser.style.display = "none";
+        btnEntrar.innerText = "Log in";
+        txtPregunta.innerText = "Don't have an account?";
+        enlaceAuth.innerText = "Sign up";
+        if(contenedorForm) contenedorForm.style.minHeight = "380px";
     }
 }
 
-// js/app.js
+// ==========================================================================
+// CONTROL DE VISIBILIDAD DE CONTRASEÑA NATIVA
+// ==========================================================================
+function alternarVisibilidadClave() {
+    const inputClave = document.getElementById("login-clave");
+    const btnOjo = document.getElementById("btn-ver-clave");
 
-// Lógica de apertura del Modal genérico para inserciones rápidas
-function abrirModal(tipo) {
-    const modal = document.getElementById("modal-formulario");
-    const titulo = document.getElementById("modal-titulo");
-    const campos = document.getElementById("modal-campos");
-    
-    titulo.innerText = `Crear Nuevo ${tipo}`;
-    modal.style.display = "flex";
-    
-    if (tipo === 'Gasto' || tipo === 'Ingreso') {
-        campos.innerHTML = `
-            <input type="text" id="form-desc" placeholder="Descripción (ej. Supermercado)">
-            <input type="number" id="form-monto" placeholder="Importe (€)">
-            <input type="text" id="form-cat" placeholder="ID Categoría (1-4)">
-        `;
-    } else if (tipo === 'Meta') {
-        campos.innerHTML = `
-            <input type="text" id="form-desc" placeholder="Nombre del objetivo">
-            <input type="number" id="form-monto" placeholder="Cantidad total meta (€)">
-            <input type="number" id="form-ahorrado" placeholder="Dinero acumulado inicial (€)">
-        `;
+    if (inputClave.type === "password") {
+        inputClave.type = "text";
+        btnOjo.innerText = "🙈"; 
+    } else {
+        inputClave.type = "password";
+        btnOjo.innerText = "👁️";
     }
+}
+
+function irAInicio() {
+    cambiarSeccionPrincipal("inicio");
+}
+
+function cambiarSeccionPrincipal(seccion) {
+    seccionPrincipalActual = seccion;
+    modoCrudActivo = "lectura";
+    
+    document.getElementById("sec-inicio").style.display = "none";
+    document.getElementById("sec-modulo-operativo").style.display = "none";
+    document.getElementById("sec-analisis").style.display = "none";
+    document.getElementById("sec-ayuda").style.display = "none";
+    document.getElementById("subbar-finanzas").style.display = "none";
+
+    document.querySelectorAll(".enlace-principal").forEach(el => el.classList.remove("activo"));
+
+    if (seccion === "inicio") {
+        document.getElementById("nav-inicio").classList.add("activo");
+        document.getElementById("sec-inicio").style.display = "block";
+        if (typeof calcularBalancesResumen === "function") {
+            calcularBalancesResumen();
+        }
+    } else if (seccion === "movimientos" || seccion === "objetivos") {
+        document.getElementById(`nav-${seccion}`).classList.add("activo");
+        document.getElementById("sec-modulo-operativo").style.display = "block";
+        document.getElementById("subbar-finanzas").style.display = "flex";
+        
+        let targetSub = (seccion === "movimientos") ? "gastos" : "presupuestos";
+        cambiarSubPestana(targetSub);
+    } else if (seccion === "analisis") {
+        document.getElementById("nav-analisis").classList.add("activo");
+        document.getElementById("sec-analisis").style.display = "block";
+        if (typeof inicializarModuloGraficos === "function") {
+            inicializarModuloGraficos();
+        }
+    } else if (seccion === "ayuda") {
+        document.getElementById("nav-ayuda").classList.add("activo");
+        document.getElementById("sec-ayuda").style.display = "block";
+    }
+}
+
+function cambiarSubPestana(sub) {
+    subPestanaActual = sub;
+    modoCrudActivo = "lectura";
+    
+    document.querySelectorAll(".tab-operativo").forEach(btn => btn.classList.remove("activo"));
+    document.getElementById(`tab-${sub}`).classList.add("activo");
+    
+    document.getElementById("titulo-modulo-activo").innerText = `Panel de Control: ${sub.toUpperCase()}`;
+    document.getElementById("btn-confirmar-eliminar").style.display = "none";
+
+    if (typeof renderizarListaDinamica === "function") {
+        renderizarListaDinamica();
+    }
+}
+
+function abrirModalCrear() {
+    elementoEditandoId = null;
+    document.getElementById("modal-titulo").innerText = `Añadir Nuevo: ${subPestanaActual.toUpperCase()}`;
+    if (typeof generarCamposFormularioModal === "function") {
+        generarCamposFormularioModal();
+    }
+    document.getElementById("modal-formulario").style.display = "flex";
 }
 
 function cerrarModal() {
     document.getElementById("modal-formulario").style.display = "none";
+    modoCrudActivo = "lectura";
+    if (typeof renderizarListaDinamica === "function") {
+        renderizarListaDinamica();
+    }
 }
+
+Array.prototype.sumOf = function(selector) { return this.reduce((acum, item) => acum + selector(item), 0); };
+
+window.onload = function() {
+    console.log("ZenitApp inicializada y lista.");
+};

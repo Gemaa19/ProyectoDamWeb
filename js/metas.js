@@ -1,45 +1,23 @@
-// js/metas.js
+// ==========================================================================
+// METAS.JS - METAS DE AHORRO CON BARRAS DE PROGRESO
+// ==========================================================================
 
-async function obtenerMetasWeb() {
-    const token = localStorage.getItem("auth_token");
-    const contenedorObjetivos = document.getElementById("lista-metas");
-    if (!contenedorObjetivos) return; 
+let datosMetas = [
+    { id: 401, nombre: "Fondo de Emergencia", objetivo: 3000.00, ahorrado: 1200.00, fechaLimite: "2026-12-31" },
+    { id: 402, nombre: "Certificación Oxford C1", objetivo: 250.00, ahorrado: 250.00, fechaLimite: "2026-06-15" }
+];
 
-    try {
-        const respuesta = await fetch(`${URL_BASE}/metas`, {
-            method: "GET",
-            headers: { "Authorization": `Bearer ${token}` }
-        });
+function renderizarMetas(contenedor, modo) {
+    datosMetas.forEach(item => {
+        const fila = document.createElement("div");
+        fila.className = "fila-datos-capsula";
 
-        if (respuesta.ok) {
-            const metas = await respuesta.json();
-            contenedorObjetivos.innerHTML = ""; 
+        let sel = modo === "modificar" ? `<input type="radio" name="radio-modificar" class="selector-crud-radio" value="${item.id}">` :
+                  modo === "eliminar" ? `<input type="checkbox" class="selector-crud-check" value="${item.id}" onchange="actualizarContadorEliminar()">` : "";
 
-            if (metas.length === 0) {
-                contenedorObjetivos.innerHTML = `<p style="color: var(--gris-texto); padding: 20px;">No hay metas de ahorro configuradas.</p>`;
-                return;
-            }
+        let porcentaje = Math.min((item.ahorrado / item.objetivo) * 100, 100);
 
-            metas.forEach(meta => {
-                const porcentaje = (meta.progreso).toFixed(0); 
-
-                contenedorObjetivos.innerHTML += `
-                    <div class="meta-item" style="background:#FFFFFF; padding:20px; border-radius:16px; border:1px solid var(--gris-borde);">
-                        <div class="meta-info">
-                            <strong>🎯 ${meta.nombre}</strong>
-                            <span class="monto">${meta.ahorrado.toFixed(2)}€ / ${meta.objetivo.toFixed(2)}€ (${porcentaje}%)</span>
-                        </div>
-                        <div class="barra-progreso-fondo" style="margin: 12px 0;">
-                            <div class="barra-progreso-relleno barra-verde" style="width: ${Math.min(porcentaje, 100)}%"></div>
-                        </div>
-                        <div style="display:flex; justify-content: flex-end; gap: 8px;">
-                            <button class="btn-control-editar" onclick="abrirModalEditarMeta(${meta.id}, '${meta.nombre}', ${meta.objetivo}, ${meta.ahorrado})">✏️ Editar Meta</button>
-                        </div>
-                    </div>
-                `;
-            });
-        }
-    } catch (e) {
-        console.error("Error al cargar las metas:", e);
-    }
+        fila.innerHTML = `${sel} <div class="info-capsula-texto"><strong>${item.nombre}</strong> <span style="color:gray; font-size:12px; margin-left:15px;">Meta límite: ${item.fechaLimite} (Ahorrado: ${item.ahorrado}€ / Obj: ${item.objetivo}€)</span></div> <div class="monto-capsula" style="color:var(--verde-exito)">${porcentaje.toFixed(0)}%</div>`;
+        contenedor.appendChild(fila);
+    });
 }

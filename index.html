@@ -10,124 +10,168 @@
 </head>
 <body>
 
-    <div id="vista-login" class="contenedor-login">
-        <div class="tarjeta-login">
-            <h1 class="marca-titulo">ZENIT</h1>
-            <h3 class="marca-subtitulo">Control Inteligente</h3>
+   <div id="vista-login" class="contenedor-login">
+        <div class="form-container">
+            <p id="auth-main-title" class="title">ZENIT</p>
             
-            <div class="bloque-formulario" style="margin-top: 40px; width: 100%;">
-                <h2 id="auth-titulo">Iniciar Sesión</h2>
+            <div class="form">
+                <input type="text" id="login-usuario" class="input" placeholder="Nombre de usuario" style="display: none;">
                 
-                <input type="text" id="login-usuario" placeholder="Nombre de usuario" style="display: none;">
-                <input type="email" id="login-correo" placeholder="Correo electrónico">
-                <input type="password" id="login-clave" placeholder="Contraseña">
+                <input type="email" id="login-correo" class="input" placeholder="Correo electrónico">
                 
-                <button id="btn-entrar">Entrar a la Plataforma</button>
+                <div class="campo-password-wrapper">
+                    <input type="password" id="login-clave" class="input input-password-campo" placeholder="Contraseña">
+                    <button type="button" id="btn-ver-clave" class="btn-toggle-ojo" onclick="alternarVisibilidadClave()">👁️</button>
+                </div>
                 
-                <p class="texto-conmutador">
-                    <span id="txt-pregunta">¿No tienes cuenta?</span> 
-                    <a href="#" id="enlace-auth" onclick="alternarFormularioAuth(event)">Regístrate</a>
-                </p>
+                <button type="button" class="form-btn" id="btn-entrar" onclick="simularLogin(event)">Log in</button>
             </div>
+            
+            <p class="sign-up-label">
+                <span id="txt-pregunta">¿No tienes cuenta?</span>
+                <span class="sign-up-link" id="enlace-auth" onclick="alternarFormularioAuth(event)">Sign up</span>
+            </p>
         </div>
     </div>
+          
 
     <div id="vista-panel" class="app-web-layout" style="display: none;">
         
-        <nav class="barra-navegacion-global">
-            <div class="marca-corporativa">
-                <img src="logo.png" alt="Zenit Logo" class="logo-nav-img">
-                <span class="logo-texto">ZENIT Web</span>
+        <header class="franja-superior-logo" onclick="irAInicio()">
+            <div class="marca-corporativa-web">
+                <img src="logo.png" alt="Zenit Logo" class="logo-superior-img">
+                <span class="logo-texto-superior">ZENITAPP</span>
             </div>
-            <div class="menu-enlaces-global">
-                <a href="#" class="enlace-nav-web activo" onclick="cambiarPestana('sec-movimientos')">Movimientos</a>
-                <a href="#" class="enlace-nav-web" onclick="cambiarPestana('sec-metas')">Metas de Ahorro</a>
-                <a href="#" class="enlace-nav-web" onclick="cambiarPestana('sec-presupuestos')">Presupuestos</a>
-                <a href="#" class="enlace-nav-web" onclick="cambiarPestana('sec-analisis')">Análisis Premium</a>
+            <div class="usuario-perfil-header">
+                <span id="header-nombre-avatar" class="avatar-iniciales">U</span>
             </div>
-            <button id="btn-cerrar" class="btn-salir-web">Cerrar Sesión</button>
+        </header>
+
+        <nav class="franja-navegacion-principal">
+            <div class="menu-enlaces-principales">
+                <a href="#" id="nav-inicio" class="enlace-principal activo" onclick="cambiarSeccionPrincipal('inicio')">Inicio</a>
+                <a href="#" id="nav-movimientos" class="enlace-principal" onclick="cambiarSeccionPrincipal('movimientos')">Movimientos</a>
+                <a href="#" id="nav-objetivos" class="enlace-principal" onclick="cambiarSeccionPrincipal('objetivos')">Objetivos</a>
+                <a href="#" id="nav-analisis" class="enlace-principal" onclick="cambiarSeccionPrincipal('analisis')">Análisis</a>
+                <a href="#" id="nav-ayuda" class="enlace-principal" onclick="cambiarSeccionPrincipal('ayuda')">Ayuda</a>
+            </div>
+            <button id="btn-cerrar" class="btn-salir-web" onclick="cerrarSesion()">Cerrar Sesión</button>
         </nav>
 
-        <nav class="subbar-acciones-sistema">
-            <span class="titulo-operaciones">Operaciones rápidas:</span>
-            <div class="grupo-botones-acciones">
-                <button class="btn-accion gasto" onclick="abrirModal('Gasto')">Añadir Gasto</button>
-                <button class="btn-accion ingreso" onclick="abrirModal('Ingreso')">Añadir Ingreso</button>
-                <button class="btn-accion meta" onclick="abrirModal('Meta')">Crear Meta</button>
-                <button class="btn-accion presupuesto" onclick="abrirModal('Presupuesto')">Fijar Presupuesto</button>
+        <nav id="subbar-finanzas" class="franja-subbar-finanzas" style="display: none;">
+            <div class="grupo-pestañas-operativas">
+                <button id="tab-gastos" class="tab-operativo activo" onclick="cambiarSubPestana('gastos')">Gastos</button>
+                <button id="tab-ingresos" class="tab-operativo" onclick="cambiarSubPestana('ingresos')">Ingresos</button>
+                <button id="tab-presupuestos" class="tab-operativo" onclick="cambiarSubPestana('presupuestos')">Presupuestos</button>
+                <button id="tab-metas" class="tab-operativo" onclick="cambiarSubPestana('metas')">Metas</button>
             </div>
         </nav>
-
-        <div class="seccion-metricas-consolidadas">
-            <div class="tarjeta-metrica balance">
-                <h3>Tu Balance Total Libre</h3>
-                <h2 id="saldo-total">0.00€</h2>
-                <div class="salud-financiera-badge saludable" style="margin-top: 12px;">
-                    <span class="punto-dot">●</span> Salud Financiera: Estable
-                </div>
-            </div>
-            <div class="tarjeta-metrica ingresos">
-                <h3>Total Ingresos del Mes</h3>
-                <h2 id="ingresos-totales-web">0.00€</h2>
-                <div class="indicador-subtexto">Sincronizado con AWS</div>
-            </div>
-            <div class="tarjeta-metrica gastos">
-                <h3>Total Gastos del Mes</h3>
-                <h2 id="gastos-totales-web">0.00€</h2>
-                <div class="indicador-subtexto">Límites activos RDS</div>
-            </div>
-        </div>
 
         <main class="zona-contenido-principal">
             
-            <section id="sec-movimientos" class="pestana-contenido">
-                <div class="cabecera-seccion-tabla">
-                    <h2>Historial de Transacciones</h2>
-                    <span class="contador-registros">Filtro: Todo el histórico</span>
-                </div>
-                <div id="lista-movimientos" class="tabla-web-contenedor"></div>
-            </section>
-
-            <section id="sec-metas" class="pestana-contenido" style="display: none;">
-                <h2>Mis Metas de Ahorro Activas</h2>
-                <div id="lista-metas" class="grilla-web-tarjetas"></div>
-            </section>
-
-            <section id="sec-presupuestos" class="pestana-contenido" style="display: none;">
-                <h2>Límites de Presupuestos por Categoría</h2>
-                <div id="lista-presupuestos" class="grilla-web-tarjetas"></div>
-            </section>
-
-            <section id="sec-analisis" class="pestana-contenido" style="display: none;">
-                <h2>Análisis de Salud Financiera Extendida</h2>
-                <div class="panel-analisis-doble">
-                    <div class="tarjeta-grafico">
-                        <canvas id="graficoGastosWeb"></canvas>
+            <section id="sec-inicio" class="pestana-seccion">
+                <div class="tarjeta-bienvenida-info">
+                    <h2>Bienvenido a ZenitApp</h2>
+                    <p class="desc-app">ZenitApp es tu gestor financiero inteligente diseñado para tomar el control absoluto de tus ahorros diarios, planificar tus presupuestos mensuales y registrar tus gastos en tiempo real de forma segura y centralizada en la nube.</p>
+                    <div class="datos-usuario-sesion">
+                        <p><strong>Usuario Activo:</strong> <span id="perfil-nombre">Cargando...</span></p>
+                        <p><strong>Correo Electrónico:</strong> <span id="perfil-correo">Cargando...</span></p>
                     </div>
-                    <div class="tarjeta-reporte">
-                        <div class="badge-ia">ZenitAI Smart Engine</div>
-                        <h3>Recomendación Automatizada</h3>
-                        <p id="ia-consejo">Analizando histórico de AWS...</p>
+                </div>
+
+                <div class="seccion-metricas-consolidadas">
+                    <div class="tarjeta-metrica balance">
+                        <h3>Dinero Libre Real</h3>
+                        <h2 id="saldo-total">1,450.00€</h2>
+                        <div class="subtext-metrica">Disponible tras presupuestos fijos</div>
+                    </div>
+                    <div class="tarjeta-metrica ingresos">
+                        <h3>Total Ingresos</h3>
+                        <h2 id="ingresos-totales-web">2,100.00€</h2>
+                        <div class="subtext-metrica">Sincronizado con AWS RDS</div>
+                    </div>
+                    <div class="tarjeta-metrica gastos">
+                        <h3>Total Gastos</h3>
+                        <h2 id="gastos-totales-web">650.00€</h2>
+                        <div class="subtext-metrica">Límites activos controlados</div>
                     </div>
                 </div>
             </section>
+
+            <section id="sec-modulo-operativo" class="pestana-seccion" style="display: none;">
+                <div class="panel-control-operaciones">
+                    <h2 id="titulo-modulo-activo">Gestión de Elementos</h2>
+                    <div class="botonera-crud-superior">
+                        <button class="btn-crud añadir" onclick="abrirModalCrear()">
+                            <span class="icono-crud">+</span> Añadir Nuevo
+                        </button>
+                        <button class="btn-crud modificar" onclick="activarModoModificar()">
+                            <span class="icono-crud">✎</span> Modificar Seleccionado
+                        </button>
+                        <button class="btn-crud eliminar" onclick="activarModoEliminar()">
+                            <span class="icono-crud">🗑</span> Eliminar Seleccionados
+                        </button>
+                        <button id="btn-confirmar-eliminar" class="btn-crud confirmar-rojo" style="display: none;" onclick="ejecutarEliminacionMultiple()">
+                            Confirmar Borrado (<span id="contador-seleccionados">0</span>)
+                        </button>
+                    </div>
+                </div>
+
+                <div id="contenedor-lista-dinamica" class="lista-datos-tabla">
+                    </div>
+            </section>
+
+            <section id="sec-analisis" class="pestana-seccion" style="display: none;">
+                <div class="cabecera-analisis">
+                    <h2>Análisis de Salud Financiera Extendida</h2>
+                    <p>Visualización del histórico anual consolidado en AWS Estocolmo.</p>
+                </div>
+                
+                <div class="cuadrilla-graficos-analitica">
+                    <div class="tarjeta-grafico-web">
+                        <h3>Tendencia Mensual de Gastos</h3>
+                        <canvas id="graficoGastosMensuales"></canvas>
+                    </div>
+                    <div class="tarjeta-grafico-web">
+                        <h3>Evolución de Ingresos</h3>
+                        <canvas id="graficoIngresosMensuales"></canvas>
+                    </div>
+                    <div class="tarjeta-grafico-web">
+                        <h3>Progreso y Capital de Metas de Ahorro</h3>
+                        <canvas id="graficoMetasProgreso"></canvas>
+                    </div>
+                    <div class="tarjeta-grafico-web">
+                        <h3>Balance Anual Comparativo (Ingresos vs Gastos)</h3>
+                        <canvas id="graficoAnualComparativo"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <section id="sec-ayuda" class="pestana-seccion" style="display: none;">
+                <div class="tarjeta-bienvenida-info">
+                    <h2>Soporte Técnico ZenitApp</h2>
+                    <p>¿Tienes dudas sobre cómo se calcula tu <strong>Dinero Libre Real</strong>? Este valor representa el capital líquido disponible tras restar de tus ingresos mensuales todos los presupuestos fijos de tus categorías y las metas de ahorro que mantengas activas en tu panel.</p>
+                </div>
+            </section>
+
         </main>
     </div>
 
     <div id="modal-formulario" class="modal-sombra" style="display: none;">
         <div class="modal-contenido">
             <h2 id="modal-titulo">Añadir Registro</h2>
-            <div id="modal-campos"></div>
+            <div id="modal-campos" class="campos-formulario-modal">
+                </div>
             <div class="modal-botones">
                 <button class="btn-cancelar" onclick="cerrarModal()">Cancelar</button>
-                <button class="btn-guardar" id="btn-modal-guardar">Guardar en AWS</button>
+                <button class="btn-guardar" onclick="guardarFormulario()">Guardar en AWS</button>
             </div>
         </div>
     </div>
 
-    <script src="js/movimientos.js"></script>
-    <script src="js/metas.js"></script>
+<script src="js/movimientos.js"></script>
     <script src="js/presupuestos.js"></script>
+    <script src="js/metas.js"></script>
     <script src="js/analisis.js"></script>
     <script src="js/app.js"></script>
 </body>

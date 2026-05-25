@@ -1,45 +1,41 @@
-// js/movimientos.js
+// ==========================================================================
+// MOVIMIENTOS.JS - GASTOS E INGRESOS (AWS RDS ESPEJO)
+// ==========================================================================
 
-async function obtenerMovimientosWeb() {
-    const token = localStorage.getItem("auth_token");
+let datosMovimientos = {
+    gastos: [
+        { id: 101, descripcion: "Alquiler Piso Alcorcón", monto: 550.00, fecha: "2026-05-01", categoria: "Hogar" },
+        { id: 102, descripcion: "Suscripción Netflix", monto: 17.99, fecha: "2026-05-10", categoria: "Otros" },
+        { id: 103, descripcion: "Compra Mercadona", monto: 82.50, fecha: "2026-05-15", categoria: "Comida" }
+    ],
+    ingresos: [
+        { id: 201, descripcion: "Nómina Desarrolladora DAM", monto: 1850.00, fecha: "2026-05-25", categoria: "Sueldo" },
+        { id: 202, descripcion: "Venta Ropa Wallapop", monto: 250.00, fecha: "2026-05-18", categoria: "Otros" }
+    ]
+};
 
-    try {
-        const respuesta = await fetch(`${URL_BASE}/transacciones`, {
-            method: "GET",
-            headers: { "Authorization": `Bearer ${token}` }
-        });
+function calcularBalancesResumen() {
+    let tIngresos = datosMovimientos.ingresos.sumOf(i => i.monto);
+    let tGastos = datosMovimientos.gastos.sumOf(g => g.monto);
+    let tPresupuestos = datosPresupuestos.sumOf(p => p.montoLimite); // Traído de presupuestos.js
+    
+    let dineroLibreReal = tIngresos - tPresupuestos;
 
-        if (respuesta.ok) {
-            const movimientos = await respuesta.json();
-            const contenedor = document.getElementById("lista-movimientos");
-            contenedor.innerHTML = ""; 
+    document.getElementById("saldo-total").innerText = `${dineroLibreReal.toFixed(2)}€`;
+    document.getElementById("ingresos-totales-web").innerText = `${tIngresos.toFixed(2)}€`;
+    document.getElementById("gastos-totales-web").innerText = `${tGastos.toFixed(2)}€`;
+}
 
-            if (movimientos.length === 0) {
-                contenedor.innerHTML = `<p style="color: var(--gris-texto); padding: 20px; text-align:center;">No hay movimientos registrados.</p>`;
-                return;
-            }
+function renderizarMovimientos(sub, contenedor, modo, selectorHtml) {
+    let coleccion = datosMovimientos[sub];
+    coleccion.forEach(item => {
+        const fila = document.createElement("div");
+        fila.className = "fila-datos-capsula";
+        
+        let sel = modo === "modificar" ? `<input type="radio" name="radio-modificar" class="selector-crud-radio" value="${item.id}">` :
+                  modo === "eliminar" ? `<input type="checkbox" class="selector-crud-check" value="${item.id}" onchange="actualizarContadorEliminar()">` : "";
 
-            movimientos.forEach(mov => {
-                const esIngreso = mov.tipo === "INGRESO";
-                const colorClase = esIngreso ? "texto-verde" : "texto-rojo";
-                const signo = esIngreso ? "+" : "-";
-
-                contenedor.innerHTML += `
-                    <div class="capsula-movimiento">
-                        <div class="info-izquierda">
-                            <strong>${mov.descripcion || "Movimiento general"}</strong>
-                            <span style="font-size:11px; color:gray; margin-left: 10px;">ID Categoria: ${mov.categoriaId || "Sin asignar"}</span>
-                        </div>
-                        <div class="bloque-acciones-derecha">
-                            <span class="monto-web ${colorClase}">${signo}${mov.monto.toFixed(2)}€</span>
-                            <button class="btn-control-editar" onclick="abrirModalEditarMovimiento(${mov.id}, '${mov.descripcion}', ${mov.monto}, '${mov.tipo}', ${mov.categoriaId})">✏️</button>
-                            <button class="btn-control-editar" style="color:var(--rojo-peligro);" onclick="borrarMovimientoWeb(${mov.id})">🗑️</button>
-                        </div>
-                    </div>
-                `;
-            });
-        }
-    } catch (e) {
-        console.error("Error al cargar movimientos:", e);
-    }
+        fila.innerHTML = `${sel} <div class="info-capsula-texto"><strong>${item.descripcion}</strong> <span style="color:gray; font-size:12px; margin-left:15px;">${item.fecha} | Cat: ${item.categoria}</span></div> <div class="monto-capsula">${item.monto.toFixed(2)}€</div>`;
+        contenedor.appendChild(fila);
+    });
 }
